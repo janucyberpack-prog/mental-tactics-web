@@ -1,36 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import {
-  Clock,
-  Bookmark,
-  Share2,
-  ArrowLeft,
-  ArrowRight,
-  MessageSquare,
-  Trash2,
-  Copy,
-  Check,
-  Send,
-  User,
-  Heart
-} from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Clock, Bookmark, Share2, ArrowLeft, ArrowRight, MessageSquare, Trash2, Copy, Check, Send } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { ArticleSkeleton } from '../components/Skeletons';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import {
-  getPostBySlug,
-  getPublishedPosts,
-  savePost,
-  removeSavedPost,
-  isPostSaved
-} from '../services/posts';
+import { getPostBySlug, getPublishedPosts, savePost, removeSavedPost, isPostSaved } from '../services/posts';
 import { getCommentsForPost, addComment, deleteComment } from '../services/comments';
 import { Post, Comment } from '../types';
 
 export const ArticleDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { user, profile, isAdmin } = useAuth();
   const { showToast } = useToast();
 
@@ -79,7 +59,7 @@ export const ArticleDetail: React.FC = () => {
 
   const handleToggleSave = async () => {
     if (!user || !post) {
-      showToast('Please sign in to save reflections to your sanctuary.', 'info');
+      showToast('Please sign in to bookmark stories.', 'info');
       return;
     }
 
@@ -87,11 +67,11 @@ export const ArticleDetail: React.FC = () => {
       if (saved) {
         await removeSavedPost(user.uid, post.id);
         setSaved(false);
-        showToast('Article removed from your sanctuary.', 'info');
+        showToast('Removed from saved.', 'info');
       } else {
         await savePost(user.uid, post);
         setSaved(true);
-        showToast('Saved to your quiet sanctuary.', 'success');
+        showToast('Saved to sanctuary.', 'success');
       }
     } catch (err) {
       showToast('Failed to update bookmark.', 'error');
@@ -101,35 +81,19 @@ export const ArticleDetail: React.FC = () => {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setShareCopied(true);
-    showToast('Link copied to clipboard.', 'success');
+    showToast('Link copied.', 'success');
     setTimeout(() => setShareCopied(false), 3000);
-  };
-
-  const handleNativeShare = async () => {
-    if (navigator.share && post) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt,
-          url: window.location.href
-        });
-      } catch (err) {
-        // Ignored if user dismissed share dialog
-      }
-    } else {
-      setShowShareModal(true);
-    }
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profile || !post) {
-      showToast('Please sign in to share your reflection.', 'info');
+      showToast('Please sign in to leave a reflection.', 'info');
       return;
     }
 
     if (newComment.trim().length < 3) {
-      showToast('Please write at least a few words.', 'error');
+      showToast('Please write a message.', 'error');
       return;
     }
 
@@ -147,7 +111,7 @@ export const ArticleDetail: React.FC = () => {
       };
       setComments([newCommentObj, ...comments]);
       setNewComment('');
-      showToast('Your reflection has been welcomed.', 'success');
+      showToast('Reflection shared.', 'success');
     } catch (err: any) {
       showToast(err.message || 'Unable to post comment.', 'error');
     } finally {
@@ -167,7 +131,7 @@ export const ArticleDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] py-16">
+      <div className="min-h-screen py-16" style={{ backgroundColor: 'var(--paper)' }}>
         <ArticleSkeleton />
       </div>
     );
@@ -175,31 +139,39 @@ export const ArticleDetail: React.FC = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-6 text-center">
+      <div className="min-h-[70vh] flex items-center justify-center p-6 text-center" style={{ backgroundColor: 'var(--paper)', color: 'var(--ink)' }}>
         <div className="max-w-md space-y-4">
-          <h2 className="font-serif text-3xl text-[#122B22]">Reflection not found</h2>
-          <p className="text-sm text-[#122B22]/70 leading-relaxed">
-            This article may have drifted into the quiet archives or does not exist.
+          <h2 className="serif text-3xl">Story not found</h2>
+          <p className="text-sm opacity-70">
+            This note may have moved or does not exist.
           </p>
           <Link
             to="/journal"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#122B22] text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 22px',
+              borderRadius: '999px',
+              backgroundColor: 'var(--ink)',
+              color: 'var(--white)',
+              fontSize: '13px',
+              fontWeight: 600
+            }}
           >
-            <ArrowLeft className="w-4 h-4" /> Return to Journal
+            <ArrowLeft style={{ width: '15px', height: '15px' }} /> Return to stories
           </Link>
         </div>
       </div>
     );
   }
 
-  // Prev & Next navigation
   const currentIndex = allPosts.findIndex(p => p.id === post.id);
   const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
   const nextPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
-  const relatedPosts = allPosts.filter(p => p.id !== post.id && p.category === post.category).slice(0, 2);
 
   return (
-    <article className="min-h-screen bg-[#FAF7F2] text-[#122B22] py-12 md:py-20">
+    <article className="min-h-screen py-12 md:py-20" style={{ backgroundColor: 'var(--paper)', color: 'var(--ink)' }}>
       <SEO
         title={post.title}
         description={post.excerpt}
@@ -207,134 +179,166 @@ export const ArticleDetail: React.FC = () => {
         type="article"
       />
 
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="wrap" style={{ maxWidth: '840px' }}>
         {/* Back Link */}
         <div className="mb-8">
           <Link
             to="/journal"
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#6F8A77] hover:text-[#122B22] transition-colors"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: 'var(--dark)'
+            }}
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Journal</span>
+            <ArrowLeft style={{ width: '14px', height: '14px' }} />
+            <span>Stories</span>
           </Link>
         </div>
 
         {/* Article Header */}
-        <header className="space-y-6 text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#B8E0D2]/40 text-[#122B22]">
+        <header className="space-y-6 text-center mb-12">
+          <div
+            style={{
+              display: 'inline-block',
+              padding: '5px 16px',
+              borderRadius: '999px',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              backgroundColor: 'var(--sage)',
+              color: 'var(--ink)'
+            }}
+          >
             {post.category}
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-[#122B22] leading-[1.15]">
+          <h1
+            className="serif"
+            style={{
+              fontSize: 'clamp(36px, 5.5vw, 68px)',
+              lineHeight: 1.05,
+              fontWeight: 400,
+              margin: '0 auto',
+              maxWidth: '780px'
+            }}
+          >
             {post.title}
           </h1>
 
-          <p className="text-base sm:text-lg text-[#122B22]/75 leading-relaxed font-sans max-w-2xl mx-auto">
+          <p style={{ fontSize: '17px', lineHeight: 1.65, color: 'rgba(24, 34, 29, 0.75)', maxWidth: '620px', margin: '0 auto' }}>
             {post.excerpt}
           </p>
 
-          {/* Author and Metadata Bar */}
-          <div className="pt-6 border-t border-[#EBE6DC] flex flex-wrap items-center justify-between gap-4 text-xs text-[#6F8A77]">
+          {/* Metadata */}
+          <div
+            className="flex items-center justify-between pt-6 text-xs"
+            style={{ borderTop: '1px solid var(--line)', color: 'var(--dark)', fontWeight: 600 }}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E5ECE7] overflow-hidden flex items-center justify-center font-bold text-[#122B22]">
-                {post.authorPhoto ? (
-                  <img src={post.authorPhoto} alt={post.authorName} className="w-full h-full object-cover" />
-                ) : (
-                  post.authorName.charAt(0)
-                )}
-              </div>
-              <div className="text-left">
-                <div className="font-semibold text-[#122B22]">{post.authorName}</div>
-                <div>Editorial Contemplator</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 font-medium">
-                <Clock className="w-3.5 h-3.5" />
+              <span>{post.authorName}</span>
+              <span>·</span>
+              <span className="flex items-center gap-1">
+                <Clock style={{ width: '13px', height: '13px' }} />
                 {post.readingTime} min read
               </span>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleToggleSave}
-                  aria-label="Save reflection"
-                  className={`p-2 rounded-full border transition-all ${
-                    saved
-                      ? 'bg-[#122B22] text-[#FAF7F2] border-[#122B22]'
-                      : 'bg-white border-[#EBE6DC] text-[#122B22] hover:bg-[#FAF7F2]'
-                  }`}
-                >
-                  <Bookmark className={`w-4 h-4 ${saved ? 'fill-current' : ''}`} />
-                </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleSave}
+                aria-label="Save reflection"
+                style={{
+                  padding: '8px',
+                  borderRadius: '50%',
+                  border: '1px solid var(--line)',
+                  backgroundColor: saved ? 'var(--ink)' : 'var(--white)',
+                  color: saved ? 'var(--white)' : 'var(--ink)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Bookmark style={{ width: '15px', height: '15px', fill: saved ? 'currentColor' : 'none' }} />
+              </button>
 
-                <button
-                  onClick={handleNativeShare}
-                  aria-label="Share article"
-                  className="p-2 rounded-full bg-white border border-[#EBE6DC] text-[#122B22] hover:bg-[#FAF7F2] transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setShowShareModal(true)}
+                aria-label="Share story"
+                style={{
+                  padding: '8px',
+                  borderRadius: '50%',
+                  border: '1px solid var(--line)',
+                  backgroundColor: 'var(--white)',
+                  color: 'var(--ink)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Share2 style={{ width: '15px', height: '15px' }} />
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Hero Artwork */}
-        <div className="rounded-3xl overflow-hidden mb-16 shadow-md border border-[#EBE6DC] bg-[#FAF7F2] max-h-[520px]">
+        {/* Cover Artwork */}
+        <div
+          style={{
+            borderRadius: '24px',
+            overflow: 'hidden',
+            marginBottom: '48px',
+            border: '1px solid var(--line)',
+            maxHeight: '480px'
+          }}
+        >
           <img
             src={post.coverImage}
             alt={post.title}
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
 
-        {/* Long-Form Reading Content */}
-        <div className="max-w-2xl mx-auto prose prose-neutral prose-lg">
-          <div className="text-[#122B22]/85 text-base sm:text-lg leading-[1.8] font-sans space-y-6">
+        {/* Article Body */}
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <div style={{ fontSize: '17px', lineHeight: 1.85, color: 'rgba(24, 34, 29, 0.88)' }} className="space-y-6">
             {post.content.split('\n\n').map((paragraph, idx) => {
-              // Subheading
               if (paragraph.startsWith('### ')) {
                 return (
-                  <h3 key={idx} className="font-serif text-2xl sm:text-3xl font-normal text-[#122B22] pt-6 pb-2">
+                  <h3 key={idx} className="serif" style={{ fontSize: '28px', color: 'var(--ink)', paddingTop: '20px', margin: '0 0 10px' }}>
                     {paragraph.replace('### ', '')}
                   </h3>
                 );
               }
-              // List items
               if (paragraph.startsWith('* ') || paragraph.startsWith('1. ')) {
                 const lines = paragraph.split('\n');
                 return (
-                  <ul key={idx} className="space-y-3 pl-4 border-l-2 border-[#8EA595]/40 my-6">
+                  <ul key={idx} style={{ paddingLeft: '20px', borderLeft: '2px solid var(--sage)', margin: '20px 0' }} className="space-y-2">
                     {lines.map((line, lIdx) => (
-                      <li key={lIdx} className="text-[#122B22]/80 text-base leading-relaxed">
-                        {line.replace(/^(\* |\d+\. )/, '')}
-                      </li>
+                      <li key={lIdx}>{line.replace(/^(\* |\d+\. )/, '')}</li>
                     ))}
                   </ul>
                 );
               }
-
-              // First paragraph gets a drop-cap aesthetic
-              if (idx === 0) {
-                return (
-                  <p key={idx} className="text-lg leading-relaxed first-letter:float-left first-letter:text-5xl first-letter:pr-3 first-letter:font-serif first-letter:text-[#122B22] first-letter:leading-none">
-                    {paragraph}
-                  </p>
-                );
-              }
-
-              return <p key={idx}>{paragraph}</p>;
+              return <p key={idx} style={{ margin: 0 }}>{paragraph}</p>;
             })}
           </div>
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="pt-10 mt-12 border-t border-[#EBE6DC] flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-8 mt-12" style={{ borderTop: '1px solid var(--line)' }}>
               {post.tags.map((tag, idx) => (
                 <span
                   key={idx}
-                  className="px-3 py-1 rounded-full text-xs font-medium bg-white border border-[#EBE6DC] text-[#6F8A77]"
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    backgroundColor: 'var(--white)',
+                    border: '1px solid var(--line)',
+                    color: 'var(--dark)'
+                  }}
                 >
                   #{tag}
                 </span>
@@ -343,15 +347,25 @@ export const ArticleDetail: React.FC = () => {
           )}
         </div>
 
-        {/* Share Modal Dropdown */}
+        {/* Share Modal */}
         {showShareModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-[#EBE6DC] shadow-2xl space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[#F2ECE4]">
-                <h4 className="font-serif text-lg text-[#122B22]">Share Reflection</h4>
+            <div
+              style={{
+                backgroundColor: 'var(--white)',
+                borderRadius: '24px',
+                padding: '24px',
+                maxWidth: '340px',
+                width: '100%',
+                border: '1px solid var(--line)',
+                boxShadow: '0 16px 36px rgba(0,0,0,0.15)'
+              }}
+            >
+              <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: '1px solid var(--line)' }}>
+                <h4 className="serif" style={{ fontSize: '18px', margin: 0 }}>Share note</h4>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="text-xs text-[#6F8A77] hover:text-[#122B22]"
+                  style={{ fontSize: '12px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--dark)' }}
                 >
                   Close
                 </button>
@@ -360,172 +374,156 @@ export const ArticleDetail: React.FC = () => {
               <div className="space-y-2">
                 <button
                   onClick={handleCopyLink}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-xs font-semibold text-[#122B22] transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    borderRadius: '16px',
+                    backgroundColor: 'var(--paper)',
+                    border: 0,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
                 >
                   <span className="flex items-center gap-2">
-                    <Copy className="w-4 h-4" /> Copy Direct Link
+                    <Copy style={{ width: '15px', height: '15px' }} /> Copy link
                   </span>
-                  {shareCopied && <Check className="w-4 h-4 text-emerald-600" />}
+                  {shareCopied && <Check style={{ width: '15px', height: '15px', color: 'var(--dark)' }} />}
                 </button>
-
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center gap-2 p-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-xs font-semibold text-[#122B22] transition-colors"
-                >
-                  <span>Share on X / Twitter</span>
-                </a>
-
-                <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center gap-2 p-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-xs font-semibold text-[#122B22] transition-colors"
-                >
-                  <span>Share on LinkedIn</span>
-                </a>
-
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center gap-2 p-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-xs font-semibold text-[#122B22] transition-colors"
-                >
-                  <span>Share on Facebook</span>
-                </a>
               </div>
             </div>
           </div>
         )}
 
-        {/* Previous and Next Navigation */}
-        <div className="max-w-2xl mx-auto py-12 my-12 border-y border-[#EBE6DC] grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Prev & Next */}
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-12 py-8"
+          style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}
+        >
           {prevPost ? (
             <Link
               to={`/journal/${prevPost.slug}`}
-              className="p-5 rounded-2xl bg-white border border-[#EBE6DC] hover:border-[#8EA595] transition-all group"
+              style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'var(--white)', border: '1px solid var(--line)' }}
             >
-              <div className="flex items-center gap-1.5 text-xs text-[#6F8A77] font-medium mb-1">
-                <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                <span>Previous Reflection</span>
+              <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--dark)' }}>
+                ← Previous
               </div>
-              <div className="font-serif text-base text-[#122B22] font-normal line-clamp-2">
-                {prevPost.title}
-              </div>
+              <div className="serif text-base line-clamp-1">{prevPost.title}</div>
             </Link>
           ) : <div />}
 
           {nextPost && (
             <Link
               to={`/journal/${nextPost.slug}`}
-              className="p-5 rounded-2xl bg-white border border-[#EBE6DC] hover:border-[#8EA595] transition-all text-right group"
+              style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'var(--white)', border: '1px solid var(--line)', textAlign: 'right' }}
             >
-              <div className="flex items-center justify-end gap-1.5 text-xs text-[#6F8A77] font-medium mb-1">
-                <span>Next Reflection</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--dark)' }}>
+                Next →
               </div>
-              <div className="font-serif text-base text-[#122B22] font-normal line-clamp-2">
-                {nextPost.title}
-              </div>
+              <div className="serif text-base line-clamp-1">{nextPost.title}</div>
             </Link>
           )}
         </div>
 
-        {/* Comments & Community Reflections Section */}
-        <section className="max-w-2xl mx-auto pt-6 space-y-8">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-2xl text-[#122B22] flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[#6F8A77]" />
-              <span>Reader Reflections ({comments.length})</span>
-            </h3>
-          </div>
+        {/* Comments */}
+        <section className="pt-4 space-y-6" style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <h3 className="serif text-2xl flex items-center gap-2">
+            <MessageSquare style={{ width: '18px', height: '18px', color: 'var(--dark)' }} />
+            <span>Reflections ({comments.length})</span>
+          </h3>
 
-          {/* Add Comment Box */}
           {user ? (
-            <form onSubmit={handleAddComment} className="bg-white rounded-3xl p-6 border border-[#EBE6DC] shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#E5ECE7] text-[#122B22] flex items-center justify-center font-semibold text-xs">
-                  {profile?.displayName?.charAt(0) || 'U'}
-                </div>
-                <span className="text-xs font-semibold text-[#122B22]">
-                  {profile?.displayName || user.email}
-                </span>
-              </div>
-
+            <form onSubmit={handleAddComment} className="p-6 rounded-2xl space-y-4" style={{ backgroundColor: 'var(--white)', border: '1px solid var(--line)' }}>
               <textarea
                 rows={3}
                 required
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Share a thoughtful observation from your own practice..."
-                className="w-full bg-[#FAF7F2] border border-[#EBE6DC] rounded-2xl p-4 text-sm text-[#122B22] placeholder-[#122B22]/40 focus:outline-none focus:border-[#8EA595] transition-all resize-none"
+                placeholder="Leave a quiet thought..."
+                style={{
+                  width: '100%',
+                  backgroundColor: 'var(--paper)',
+                  border: '1px solid var(--line)',
+                  borderRadius: '16px',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  outline: 0,
+                  resize: 'none'
+                }}
               />
-
               <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={commentSubmitting || !newComment.trim()}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#122B22] text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider hover:bg-[#1A3B2F] transition-all disabled:opacity-50"
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '999px',
+                    backgroundColor: 'var(--ink)',
+                    color: 'var(--white)',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    border: 0,
+                    cursor: 'pointer'
+                  }}
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{commentSubmitting ? 'Submitting...' : 'Post Reflection'}</span>
+                  Post
                 </button>
               </div>
             </form>
           ) : (
-            <div className="bg-white/80 rounded-3xl p-6 border border-[#EBE6DC] text-center space-y-3">
-              <p className="text-sm text-[#122B22]/70 font-medium">
-                Sign in to join the conversation and contribute your thoughts.
-              </p>
+            <div className="p-6 rounded-2xl text-center" style={{ backgroundColor: 'var(--white)', border: '1px solid var(--line)' }}>
+              <p className="text-sm opacity-75 mb-3">Sign in to leave a reflection.</p>
               <Link
                 to="/login"
-                className="inline-block px-6 py-2 rounded-full bg-[#122B22] text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider hover:bg-[#1A3B2F] transition-colors"
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--ink)',
+                  color: 'var(--white)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  display: 'inline-block'
+                }}
               >
-                Sign In to Reflect
+                Sign in
               </Link>
             </div>
           )}
 
           {/* Comments List */}
-          <div className="space-y-4">
-            {comments.length === 0 ? (
-              <p className="text-xs text-[#6F8A77] text-center py-6">
-                No reflections yet. Be the first to leave a gentle thought.
-              </p>
-            ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="bg-white/90 rounded-2xl p-5 border border-[#EBE6DC] space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-[#FAF7F2] border border-[#EBE6DC] flex items-center justify-center text-xs font-semibold text-[#122B22]">
-                        {comment.authorName?.charAt(0) || 'R'}
-                      </div>
-                      <span className="text-xs font-semibold text-[#122B22]">
-                        {comment.authorName}
-                      </span>
-                    </div>
-
-                    {(user?.uid === comment.authorId || isAdmin) && (
-                      <button
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="text-[#6F8A77] hover:text-red-700 p-1 transition-colors"
-                        title="Delete comment"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-[#122B22]/85 leading-relaxed pl-9">
-                    {comment.content}
-                  </p>
+          <div className="space-y-3">
+            {comments.map((comment) => (
+              <div
+                key={comment.id}
+                style={{
+                  backgroundColor: 'var(--white)',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  border: '1px solid var(--line)'
+                }}
+              >
+                <div className="flex items-center justify-between mb-2 text-xs font-semibold">
+                  <span>{comment.authorName}</span>
+                  {(user?.uid === comment.authorId || isAdmin) && (
+                    <button
+                      onClick={() => handleDeleteComment(comment.id)}
+                      style={{ background: 'none', border: 0, color: '#b3261e', cursor: 'pointer' }}
+                    >
+                      <Trash2 style={{ width: '13px', height: '13px' }} />
+                    </button>
+                  )}
                 </div>
-              ))
-            )}
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, opacity: 0.85 }}>
+                  {comment.content}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       </div>

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bookmark, User as UserIcon, Menu, X, Shield, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Bookmark, User as UserIcon, Shield, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
 
 export const Navbar: React.FC = () => {
-  const { user, profile, isAdmin, isEditor, logout } = useAuth();
+  const { user, profile, isAdmin, logout } = useAuth();
   const { showToast } = useToast();
-  const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -15,265 +14,287 @@ export const Navbar: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      showToast('You have signed out quietly. Peace be with you.', 'info');
+      showToast('Signed out.', 'info');
       setProfileDropdownOpen(false);
-      navigate('/');
     } catch (err) {
       console.error(err);
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isHome = location.pathname === '/';
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FAF7F2]/80 backdrop-blur-md border-b border-[#EBE6DC]/80 transition-all">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* Brand Identity */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-full bg-[#122B22] flex items-center justify-center text-[#FAF7F2] font-serif text-sm font-semibold transition-transform duration-300 group-hover:scale-105">
-            M
-          </div>
-          <span className="font-serif text-xl tracking-wider text-[#122B22] font-semibold uppercase">
-            Mental Tactic
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#122B22]/80">
-          <Link
-            to="/journal"
-            className={`transition-colors hover:text-[#122B22] ${
-              isActive('/journal') ? 'text-[#122B22] font-semibold' : ''
-            }`}
-          >
-            Journal
-          </Link>
-          <Link
-            to="/about"
-            className={`transition-colors hover:text-[#122B22] ${
-              isActive('/about') ? 'text-[#122B22] font-semibold' : ''
-            }`}
-          >
-            Manifesto
-          </Link>
-          <Link
-            to="/contact"
-            className={`transition-colors hover:text-[#122B22] ${
-              isActive('/contact') ? 'text-[#122B22] font-semibold' : ''
-            }`}
-          >
-            Contact
-          </Link>
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#122B22] text-[#FAF7F2] hover:bg-[#1A3B2F] transition-all shadow-sm"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#B8E0D2]" />
-              <span>Admin</span>
-            </Link>
-          )}
-        </nav>
-
-        {/* Right CTA / Auth Status */}
-        <div className="hidden md:flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                to="/saved"
-                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
-                  isActive('/saved')
-                    ? 'bg-[#122B22] text-[#FAF7F2] border-[#122B22]'
-                    : 'bg-white/80 border-[#EBE6DC] text-[#122B22] hover:bg-white'
-                }`}
-                title="Saved"
-              >
-                <Bookmark className="w-4 h-4" />
-              </Link>
-
-              {/* User Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-2.5 p-1.5 pl-3 rounded-full bg-white/80 border border-[#EBE6DC] hover:border-[#8EA595] transition-all"
-                >
-                  <span className="text-xs font-medium text-[#122B22] max-w-[100px] truncate">
-                    {profile?.displayName || 'Account'}
-                  </span>
-                  <div className="w-7 h-7 rounded-full bg-[#E5ECE7] text-[#122B22] flex items-center justify-center text-xs font-semibold overflow-hidden">
-                    {profile?.photoURL ? (
-                      <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      profile?.displayName?.charAt(0).toUpperCase() || 'U'
-                    )}
-                  </div>
-                </button>
-
-                {profileDropdownOpen && (
-                  <div
-                    onMouseLeave={() => setProfileDropdownOpen(false)}
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#EBE6DC] py-2 z-50 text-sm font-medium animate-in fade-in"
-                  >
-                    <div className="px-4 py-2 border-b border-[#F2ECE4]">
-                      <p className="text-xs font-semibold text-[#122B22] truncate">{user.email}</p>
-                    </div>
-
-                    <Link
-                      to="/account"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-[#122B22] hover:bg-[#FAF7F2] transition-colors"
-                    >
-                      <UserIcon className="w-4 h-4 text-[#6F8A77]" />
-                      <span>Profile</span>
-                    </Link>
-
-                    <Link
-                      to="/saved"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-[#122B22] hover:bg-[#FAF7F2] transition-colors"
-                    >
-                      <Bookmark className="w-4 h-4 text-[#6F8A77]" />
-                      <span>Saved</span>
-                    </Link>
-
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-[#122B22] hover:bg-[#FAF7F2] transition-colors"
-                      >
-                        <Shield className="w-4 h-4 text-[#E27D60]" />
-                        <span>Admin</span>
-                      </Link>
-                    )}
-
-                    <div className="border-t border-[#F2ECE4] my-1" />
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-[#A33] hover:bg-[#FFF5F5] transition-colors text-left"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign out</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link
-                to="/login"
-                className="text-xs font-semibold uppercase tracking-wider text-[#122B22] hover:text-[#6F8A77] px-3 py-2 transition-colors"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/register"
-                className="px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#122B22] text-[#FAF7F2] hover:bg-[#1A3B2F] transition-all shadow-sm"
-              >
-                Sign up
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Hamburger Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-[#122B22] hover:bg-black/5 rounded-xl transition-colors"
-          aria-label="Toggle menu"
+    <nav className="wrap" style={{ height: '92px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', position: 'relative', zIndex: 30 }}>
+      {/* Brand */}
+      <Link to="/" className="brand" style={{ display: 'flex', alignItems: 'center', gap: '11px', fontWeight: 700, fontSize: '19px', color: 'var(--ink)' }}>
+        <span
+          className="mark"
+          style={{
+            width: '34px',
+            height: '34px',
+            border: '1.5px solid var(--ink)',
+            borderRadius: '50% 50% 45% 55%',
+            transform: 'rotate(-12deg)',
+            position: 'relative',
+            display: 'inline-block'
+          }}
         >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
+          <span
+            style={{
+              position: 'absolute',
+              width: '5px',
+              height: '5px',
+              right: '6px',
+              top: '7px',
+              backgroundColor: 'var(--lilac)',
+              borderRadius: '50%'
+            }}
+          />
+        </span>
+        <span>mental tactic</span>
+      </Link>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-[#FAF7F2] border-b border-[#EBE6DC] px-6 py-6 space-y-4 animate-in slide-in-from-top">
-          <nav className="flex flex-col gap-4 text-base font-medium text-[#122B22]">
+      {/* Desktop Links */}
+      <div className="links hidden md:flex" style={{ gap: '34px', alignItems: 'center', fontSize: '14px' }}>
+        {isHome ? (
+          <>
+            <a href="#stories" style={{ color: 'inherit' }}>Stories</a>
+            <a href="#practice" style={{ color: 'inherit' }}>Practice</a>
+            <a href="#about" style={{ color: 'inherit' }}>Our approach</a>
+          </>
+        ) : (
+          <>
+            <Link to="/journal" style={{ color: 'inherit' }}>Stories</Link>
+            <Link to="/#practice" style={{ color: 'inherit' }}>Practice</Link>
+            <Link to="/about" style={{ color: 'inherit' }}>Our approach</Link>
+          </>
+        )}
+
+        {/* Authenticated Actions */}
+        {user ? (
+          <div className="flex items-center gap-3">
             <Link
-              to="/journal"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-[#6F8A77]"
+              to="/saved"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: '1px solid var(--line)',
+                backgroundColor: location.pathname === '/saved' ? 'var(--ink)' : 'var(--white)',
+                color: location.pathname === '/saved' ? 'var(--white)' : 'var(--ink)'
+              }}
+              title="Saved"
             >
-              Journal
+              <Bookmark style={{ width: '15px', height: '15px' }} />
             </Link>
-            <Link
-              to="/about"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-[#6F8A77]"
-            >
-              Manifesto
-            </Link>
-            <Link
-              to="/contact"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-[#6F8A77]"
-            >
-              Contact
-            </Link>
-            {user && (
-              <>
-                <Link
-                  to="/saved"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="py-1 hover:text-[#6F8A77]"
-                >
-                  Saved Sanctuary
-                </Link>
-                <Link
-                  to="/account"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="py-1 hover:text-[#6F8A77]"
-                >
-                  My Profile
-                </Link>
-              </>
-            )}
+
             {isAdmin && (
               <Link
                 to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-1 text-[#E27D60] font-semibold flex items-center gap-2"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--dark)',
+                  color: 'var(--white)',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
               >
-                <Shield className="w-4 h-4" /> Admin Studio
+                <Shield style={{ width: '13px', height: '13px' }} />
+                <span>Admin</span>
               </Link>
             )}
-          </nav>
 
-          <div className="pt-4 border-t border-[#EBE6DC] flex flex-col gap-3">
-            {user ? (
+            {/* Profile Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '5px 12px',
+                  borderRadius: '999px',
+                  border: '1px solid var(--line)',
+                  backgroundColor: 'var(--white)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                <UserIcon style={{ width: '14px', height: '14px', color: 'var(--dark)' }} />
+                <span className="max-w-[90px] truncate">{profile?.displayName || 'Account'}</span>
+              </button>
+
+              {profileDropdownOpen && (
+                <div
+                  onMouseLeave={() => setProfileDropdownOpen(false)}
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    marginTop: '8px',
+                    width: '180px',
+                    backgroundColor: 'var(--white)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--line)',
+                    padding: '8px 0',
+                    boxShadow: '0 10px 25px rgba(24,34,29,0.08)',
+                    zIndex: 50
+                  }}
+                >
+                  <Link
+                    to="/account"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    style={{ display: 'block', padding: '8px 16px', fontSize: '13px', color: 'var(--ink)' }}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/saved"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    style={{ display: 'block', padding: '8px 16px', fontSize: '13px', color: 'var(--ink)' }}
+                  >
+                    Saved
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      style={{ display: 'block', padding: '8px 16px', fontSize: '13px', color: 'var(--dark)', fontWeight: 600 }}
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
+                  <div style={{ borderTop: '1px solid var(--line)', margin: '6px 0' }} />
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      color: '#b3261e',
+                      background: 'none',
+                      border: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link to="/login" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', padding: '6px 10px' }}>
+              Sign in
+            </Link>
+            <a
+              href="#newsletter"
+              className="cta"
+              style={{
+                backgroundColor: 'var(--ink)',
+                color: 'var(--white)',
+                border: '1px solid var(--ink)',
+                borderRadius: '999px',
+                padding: '12px 22px',
+                fontSize: '13px',
+                fontWeight: 600
+              }}
+            >
+              Join the pause
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Menu Toggle */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="md:hidden"
+        style={{ background: 'none', border: 0, padding: '8px', cursor: 'pointer', color: 'var(--ink)' }}
+        aria-label="Toggle menu"
+      >
+        {mobileMenuOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
+      </button>
+
+      {/* Mobile Dropdown */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '92px',
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--paper)',
+            borderBottom: '1px solid var(--line)',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            zIndex: 40
+          }}
+        >
+          <Link to="/journal" onClick={() => setMobileMenuOpen(false)}>Stories</Link>
+          <a href="#practice" onClick={() => setMobileMenuOpen(false)}>Practice</a>
+          <Link to="/about" onClick={() => setMobileMenuOpen(false)}>Our approach</Link>
+          {user ? (
+            <>
+              <Link to="/saved" onClick={() => setMobileMenuOpen(false)}>Saved</Link>
+              <Link to="/account" onClick={() => setMobileMenuOpen(false)}>Profile</Link>
+              {isAdmin && <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin</Link>}
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="w-full py-2.5 rounded-full text-center text-xs font-semibold uppercase tracking-wider bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                style={{ textAlign: 'left', color: '#b3261e', background: 'none', border: 0, padding: 0 }}
               >
-                Sign Out
+                Sign out
               </button>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 rounded-full text-center text-xs font-semibold uppercase tracking-wider border border-[#122B22] text-[#122B22]"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 rounded-full text-center text-xs font-semibold uppercase tracking-wider bg-[#122B22] text-[#FAF7F2]"
-                >
-                  Join Sanctuary
-                </Link>
-              </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3 pt-2">
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  textAlign: 'center',
+                  padding: '12px',
+                  borderRadius: '999px',
+                  border: '1px solid var(--ink)',
+                  fontSize: '13px',
+                  fontWeight: 600
+                }}
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  textAlign: 'center',
+                  padding: '12px',
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--ink)',
+                  color: 'var(--white)',
+                  fontSize: '13px',
+                  fontWeight: 600
+                }}
+              >
+                Join the pause
+              </Link>
+            </div>
+          )}
         </div>
       )}
-    </header>
+    </nav>
   );
 };
